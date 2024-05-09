@@ -1,5 +1,6 @@
 #include <iostream>
 #include <queue>
+#include <vector>
 
 using namespace std;
 
@@ -14,13 +15,16 @@ struct TreeNode {
 class Solution {
 public:
     TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
-      queue<TreeNode *> Q;
+
+#if 0
       TreeNode * temp = root;
       TreeNode * lastMatch = root;
+      vector<TreeNode *> V;
+      int index = 0;
 
       while(true) 
       { 
-        Q.push(temp); 
+        V.push_back(temp); 
         if(temp->val > p->val) temp = temp->left; 
         else if(temp->val < p->val) temp = temp->right; 
         else break; 
@@ -30,19 +34,23 @@ public:
 
       while(true) 
       {
-        if(Q.size() == 1) return lastMatch;
+        if(V[index] != temp) return V[index-1];
 
-        if(Q.front() != temp) { return lastMatch; }
-        lastMatch = Q.front(); 
-        Q.pop();
+        if(temp->val > q->val) temp = temp->left;
+        else if(temp->val < q->val) temp = temp->right;
+        else break;
 
-        if(temp->val > q->val) 
-           temp = temp->left; 
-        else if(temp->val < q->val) 
-           temp = temp->right; 
-        else return temp;
+        if(index == V.size()-1) break;
+        index++;
       }
-      return root;
+      
+      return V[index];
+#endif
+      if(root == nullptr) return root;
+      if((p->val > root->val) && (q->val > root->val)) return lowestCommonAncestor(root->right, p, q);
+      else if ((p->val < root->val) && (q->val < root->val)) return lowestCommonAncestor(root->left, p, q);
+      else return root;
+
     }
 };
 
