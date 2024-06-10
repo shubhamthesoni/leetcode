@@ -6,85 +6,76 @@ using namespace std;
 
 struct ListNode2 {
     int val;
-    int key;
     ListNode2 *next;
     ListNode2 *prev;
-    ListNode2() : val(0), next(nullptr) {}
-    ListNode2(int x) : val(x), next(nullptr) {}
-    ListNode2(int x, ListNode2 *next) : val(x), next(next){}
+    ListNode2() : val(0),  next(nullptr), prev(nullptr) {}
+    ListNode2(int x) : val(x), next(nullptr), prev(nullptr) {}
+    ListNode2(int x, ListNode2 *next, ListNode2 *prev) : val(x), next(next), prev(prev) {}
 };
 
 class LRUCache {
     map<int, ListNode2 *> M;
-    ListNode2 * head;
-    ListNode2 * last;
+    map<ListNode2 *, int> N;
+    ListNode2 * root;
     int totalSize;
-
-    void delet
+    int currSize;
 
 public:
     LRUCache(int capacity) {
-      head = nullptr;
-      last = nullptr;
+      root = new ListNode2(-1);
       totalSize = capacity;
+    }
+
+    void insertCache(ListNode2 * node)
+    {
+      if(root->prev == nullptr) { root->next = node; root->prev = node; node->prev = root; node->next = root; }
+      else { root->prev->next = node; node->prev = root->prev; node->next = root; root->prev = node; }
+    }
+
+    void deleteCache(ListNode2 * node)
+    {
+      ListNode2 * prev = node->prev;
+      ListNode2 * next = node->next;
+      if(prev == next) { root->prev = root->next = nullptr; }
+      else if(prev == root) { root->next = node->next; node->next->prev = root; }
+      else if(next == root) { root->prev = node->prev; node->prev->next = root; }
+      else { prev->next = next; next->prev = prev; }
     }
     
     int get(int key) {
-      if(M.find(key) != M.end())
-      {
-        ListNode2 * temp = M[key];
-        if(temp != last)
-        {
-          temp->prev->next = temp->next;
-          temp->next->prev = temp->prev;
-          temp->next = nullptr;
-          temp->prev = last;
-          last = temp;
-        }
-        return temp->val;
-      }
-      return -1;
+      if(M.find(key) == M.end()) return -1;
+      ListNode2 * temp = M[key];
+      if(temp == nullptr) return -1;
+    
+      int value = temp->val;
+      deleteCache(temp);
+      insertCache(temp);
+      return value;
     }
     
     void put(int key, int value) {
-      if(M.find(key) != M.end())
+      if((M.find(key) != M.end()) && (M[key] != nullptr))
       {
         ListNode2 * temp = M[key];
         temp->val = value;
-        if(temp != last)
-        {
-          temp->prev->next = temp->next;
-          temp->next->prev = temp->prev;
-          temp->next = nullptr;
-          temp->prev = last;
-          last = temp;
-        }
+        deleteCache(temp);
+        insertCache(temp); 
         return;
       }
 
-      ListNode2 * temp = new ListNode2(value);
+      ListNode2 * temp = nullptr;
       if(M.size() >= totalSize)
       {
-        ListNode2 * dummy = head;
-        if(dummy == last) { last = nullptr; }
-        delete dummy;
-        head = head->next;
-        if(head != nullptr) { head->prev = nullptr; }
+        temp = root->next;
+        M.erase(N[temp]);
+        N.erase(temp);
+        deleteCache(temp);
       }
 
-      {
-        if(last == nullptr)
-        {
-          head = temp;
-          last = temp;
-        }  
-        else
-        {
-          temp->next = nullptr;
-          temp->prev = last;
-          last = temp;
-        }
-      } 
+      temp = new ListNode2(value);
+      M[key] = temp;
+      N[temp] = key;
+      insertCache(temp);
     }
 };
 
